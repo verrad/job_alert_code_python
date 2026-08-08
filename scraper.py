@@ -2,8 +2,8 @@ import requests
 import time
 
 # ISI DENGAN TOKEN BARU & CHAT ID KAMU
-TELEGRAM_TOKEN = "8924446972:AAHlksSRw-em-0ziXT4GNwVXbaci5k3Gskc"
-CHAT_ID = "5889763908"
+TELEGRAM_TOKEN = "your_telegram_token"
+CHAT_ID = "your_telegram_id"
 
 def scrape_jobs():
     url = "https://remoteok.com/api"
