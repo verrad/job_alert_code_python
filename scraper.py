@@ -1,7 +1,8 @@
 import requests
+import time
 
-# ISI DENGAN TOKEN & CHAT ID KAMU
-TELEGRAM_TOKEN = "8924446972:AAEHAYNunKKY3ug9ZxyLw4SBvB5T8L8KbzM"
+# ISI DENGAN TOKEN BARU & CHAT ID KAMU
+TELEGRAM_TOKEN = "8924446972:AAHlksSRw-em-0ziXT4GNwVXbaci5k3Gskc"
 CHAT_ID = "5889763908"
 
 def scrape_jobs():
@@ -35,11 +36,8 @@ def kirim_ke_telegram(pesan):
     response = requests.post(url, data=payload)
     return response.json()
 
-if __name__ == "__main__":
+def proses_dan_kirim():
     hasil = scrape_jobs()
-    print(f"Ditemukan {len(hasil)} lowongan")
-    
-    # Ambil 5 lowongan pertama saja dulu buat tes (biar tidak spam ratusan pesan sekaligus)
     lowongan_untuk_dikirim = hasil[:10]
     
     pesan = "🔔 <b>Lowongan Kerja Terbaru</b>\n\n"
@@ -48,9 +46,38 @@ if __name__ == "__main__":
         pesan += f"🏢 {job['company']}\n"
         pesan += f"🔗 {job['link']}\n\n"
     
-    hasil_kirim = kirim_ke_telegram(pesan)
+    kirim_ke_telegram(pesan)
+
+def cek_pesan_baru(last_update_id):
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates"
+    params = {"offset": last_update_id + 1, "timeout": 30}
+    response = requests.get(url, params=params)
+    return response.json()
+
+if __name__ == "__main__":
+    print("Bot aktif, menunggu perintah dari Telegram...")
+    last_update_id = 0
+    bot_aktif = True
     
-    if hasil_kirim.get("ok"):
-        print("✅ Pesan berhasil dikirim ke Telegram!")
-    else:
-        print("❌ Gagal kirim pesan:", hasil_kirim)
+    while bot_aktif:
+        updates = cek_pesan_baru(last_update_id)
+        
+        for update in updates.get("result", []):
+            last_update_id = update["update_id"]
+            
+            if "message" in update and "text" in update["message"]:
+                teks = update["message"]["text"]
+                print(f"Pesan diterima: {teks}")
+                
+                if teks == "/cari":
+                    kirim_ke_telegram("🔍 Sedang mencari lowongan...")
+                    proses_dan_kirim()
+                elif teks == "/start":
+                    kirim_ke_telegram("👋 Bot siap! Ketik /cari untuk cari lowongan terbaru.")
+                elif teks == "/exit":
+                    kirim_ke_telegram("Bot di matikan")
+                    bot_aktif = False
+                    break
+        if not bot_aktif:
+            break  
+        time.sleep(1)
